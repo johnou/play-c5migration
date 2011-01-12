@@ -1,0 +1,5 @@
+# Carbon Five Database Migration integration
+module.c5migration=${play.path}/modules/c5migration
+
+# Optional configuration
+db.migrations.path=db/migrations
