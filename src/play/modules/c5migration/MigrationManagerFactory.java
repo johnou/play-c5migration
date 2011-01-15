@@ -34,7 +34,7 @@ public class MigrationManagerFactory {
             migrationManager = new DriverManagerMigrationManager(dbDriver, dbUrl, dbUsername, dbPassword);
             migrationManager.setMigrationResolver(new ResourceMigrationResolver(migrationsPath));
         } catch (IOException e) {
-            Logger.error(e, "~ Error: creating migration manager failed!");
+            Logger.error(e, "~ ERROR: Creating migration manager failed!");
         }
         return migrationManager;
     }

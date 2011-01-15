@@ -38,13 +38,14 @@ public enum MigrationCommand {
                 String dbUrl = properties.getProperty("db.url");
                 String dbUsername = properties.getProperty("db.user");
                 String dbPassword = properties.getProperty("db.pass");
+                Logger.info("Creating database..");
                 new CreateDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute();
             } catch (ClassNotFoundException e) {
-                Logger.error(e, "~ Error: creating database failed.");
+                Logger.error(e, "~ ERROR: Creating database failed.");
             } catch (SQLException e) {
-                Logger.error(e, "~ Error: creating database failed.");
+                Logger.error(e, "~ ERROR: Creating database failed.");
             } catch (IOException e) {
-                Logger.error(e, "~ Error: creating database failed.");
+                Logger.error(e, "~ ERROR: Creating database failed.");
             }
         }
     }, DROP {
@@ -58,13 +59,14 @@ public enum MigrationCommand {
                 String dbUrl = properties.getProperty("db.url");
                 String dbUsername = properties.getProperty("db.user");
                 String dbPassword = properties.getProperty("db.pass");
+                Logger.info("Dropping database..");
                 new DropDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute();
             } catch (ClassNotFoundException e) {
-                Logger.error(e, "~ Error: creating database failed.");
+                Logger.error(e, "~ ERROR: Dropping database failed.");
             } catch (SQLException e) {
-                Logger.error(e, "~ Error: creating database failed.");
+                Logger.error(e, "~ ERROR: Dropping database failed.");
             } catch (IOException e) {
-                Logger.error(e, "~ Error: creating database failed.");
+                Logger.error(e, "~ ERROR: Dropping database failed.");
             }
         }
     }, MIGRATE {
@@ -72,16 +74,12 @@ public enum MigrationCommand {
         public void execute(String configurationPath) {
             try {
                 DriverManagerMigrationManager migrationManager = MigrationManagerFactory.createMigrationManager(configurationPath);
-                SortedSet<Migration> pendingMigrations = null;
-                try {
-                    pendingMigrations = migrationManager.pendingMigrations();
-                } catch (MigrationException e) {
-                    Logger.error(e, "~ Error: failed to run migrations. ");
-                }
+                SortedSet<Migration> pendingMigrations = migrationManager.pendingMigrations();
                 if (pendingMigrations != null && pendingMigrations.size() > 0) {
                     migrationManager.migrate();
                 }
-            } catch (MigrationException ignore) {
+            } catch (MigrationException e) {
+                Logger.error(e, "~ ERROR: Failed to run migrations. ");
             }
         }
     }, RESET {
@@ -95,17 +93,20 @@ public enum MigrationCommand {
                 String dbUrl = properties.getProperty("db.url");
                 String dbUsername = properties.getProperty("db.user");
                 String dbPassword = properties.getProperty("db.pass");
-                new DropDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute(DropDatabase.DROP_DATABASE_SQL);
-                new CreateDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute();
                 DriverManagerMigrationManager migrationManager = MigrationManagerFactory.createMigrationManager(configurationPath);
+                Logger.info("Dropping database..");
+                new DropDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute(DropDatabase.DROP_DATABASE_SQL);
+                Logger.info("Creating database..");
+                new CreateDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute();
                 migrationManager.migrate();
             } catch (IOException e) {
-                Logger.error(e, "~ Error: resetting database failed.");
+                Logger.error(e, "~ ERROR: Resetting database failed.");
             } catch (ClassNotFoundException e) {
-                Logger.error(e, "~ Error: resetting database failed.");
+                Logger.error(e, "~ ERROR: Resetting database failed.");
             } catch (SQLException e) {
-                Logger.error(e, "~ Error: resetting database failed.");
-            } catch (MigrationException ignore) {
+                Logger.error(e, "~ ERROR: Resetting database failed.");
+            } catch (MigrationException e) {
+                Logger.error(e, "~ ERROR: Resetting database failed.");
             }
         }
     }, NEW {
@@ -119,22 +120,19 @@ public enum MigrationCommand {
                 properties.load(new FileInputStream(configurationPath));
                 String migrationsPath = properties.getProperty("db.migrations.path", MigrationManagerFactory.DEFAULT_MIGRATIONS_PATH);
 
-                // Make sure the directory ends with a separator.
                 if (!migrationsPath.endsWith("/") && !migrationsPath.endsWith("\"")) {
                     migrationsPath += "/";
                 }
 
                 migrationsPath = FilenameUtils.separatorsToUnix(FilenameUtils.getFullPath(migrationsPath));
 
-                // Create the parent directories if they don't exist.
                 try {
                     new File(migrationsPath).mkdirs();
                 } catch (Exception e) {
-                    Logger.error(e, "Failed to create migrations directory: %s", migrationsPath);
+                    Logger.error(e, "~ ERROR: Failed to create migrations directory: %s", migrationsPath);
                 }
 
-                // Determine the name of the migration.
-                StringBuffer sb = new StringBuffer(FastDateFormat.getInstance(versionPattern, TimeZone.getTimeZone(versionTimeZone)).format(new Date()));
+                StringBuilder sb = new StringBuilder(FastDateFormat.getInstance(versionPattern, TimeZone.getTimeZone(versionTimeZone)).format(new Date()));
                 String name = System.getProperty("name", "");
 
                 if (StringUtils.isNotBlank(name)) {
@@ -144,16 +142,15 @@ public enum MigrationCommand {
 
                 String filename = migrationsPath + sb.toString();
 
-                // Finally, create the file.
                 Logger.info("Creating new migration %s.", filename);
 
                 try {
                     new File(filename).createNewFile();
                 } catch (IOException e) {
-                    Logger.error(e, "Failed to create migration file: %s" + filename);
+                    Logger.error(e, "~ ERROR: Failed to create migration file: %s" + filename);
                 }
             } catch (IOException e) {
-                Logger.error(e, "~ Failed to create migration file. ");
+                Logger.error(e, "~ ERROR: Failed to create migration file. ");
             }
         }
     }, CHECK {

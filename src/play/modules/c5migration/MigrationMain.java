@@ -21,7 +21,7 @@ public class MigrationMain {
         if (migrationCommand != null) {
             migrationCommand.execute(args[1]);
         } else {
-            Logger.error("~ Error: command '%s' not found!", command.toUpperCase());
+            Logger.error("~ ERROR: Command '%s' not found!", command.toLowerCase());
         }
     }
 }
