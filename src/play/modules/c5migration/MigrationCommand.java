@@ -67,6 +67,7 @@ public enum MigrationCommand {
                 String dbUsername = properties.getProperty("db.user");
                 String dbPassword = properties.getProperty("db.pass");
                 new DropDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute(DropDatabase.DROP_DATABASE_SQL);
+                new CreateDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute();
                 DriverManagerMigrationManager migrationManager = MigrationManagerFactory.createMigrationManager(configurationPath);
                 migrationManager.migrate();
             } catch (IOException e) {
@@ -74,6 +75,8 @@ public enum MigrationCommand {
             } catch (ClassNotFoundException e) {
                 System.err.println("~ Error: resetting database failed. " + e.toString());
             } catch (SQLException e) {
+                System.err.println("~ Error: resetting database failed. " + e.toString());
+            } catch (MigrationException e) {
                 System.err.println("~ Error: resetting database failed. " + e.toString());
             }
         }
