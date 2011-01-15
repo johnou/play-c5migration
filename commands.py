@@ -1,6 +1,5 @@
 import os
 import subprocess
-from time import time
 
 MODULE = 'c5migration'
 
@@ -14,12 +13,12 @@ HELP = {
     'c5migration:check': ' Check for pending migrations, fail the build if the db is not up to date'
 }
 
-def callJava(app, args, message, clazz):
-    print "~ %s" % (message)
+def callJava(app, args, command):
     java_args = []
+    java_args.append(command);
     configuration = os.path.join(app.path, 'conf/application.conf')
     java_args.append(configuration)
-    java_cmd = app.java_cmd(args, None, clazz, java_args)
+    java_cmd = app.java_cmd(args, None, 'play.modules.c5migration.MigrationMain', java_args)
     try:
         subprocess.call(java_cmd, env=os.environ)
     except OSError:
@@ -34,16 +33,16 @@ def execute(**kargs):
     env = kargs.get("env")
 
     if command == "c5migration:create":
-        callJava(app, args, "Creating new database..", "play.modules.c5migration.CreateMigrationMain")
+        callJava(app, args, "create")
 
     if command == "c5migration:migrate":
-        callJava(app, args, "Applying all pending migrations..", "play.modules.c5migration.MigrateMigrationMain")
+        callJava(app, args, "migrate")
 
     if command == "c5migration:reset":
-        callJava(app, args, "Dropping existing database, creating new one and applying all migrations..", "play.modules.c5migration.ResetMigrationMain")
+        callJava(app, args, "reset")
 
     if command == "c5migration:new":
-        callJava(app, args, "Creating new migration script..", "play.modules.c5migration.NewMigrationMain");
+        callJava(app, args, "new");
 
     if command == "c5migration:check":
-        callJava(app, args, "Checking for pending migrations..", "play.modules.c5migration.CheckMigrationMain");
+        callJava(app, args, "check");
