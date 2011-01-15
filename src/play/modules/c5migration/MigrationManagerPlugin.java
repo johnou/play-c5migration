@@ -15,15 +15,14 @@ public class MigrationManagerPlugin extends PlayPlugin {
 
     @Override
     public void onApplicationStart() {
-        DriverManagerMigrationManager migrationManager = MigrationManagerFactory.createMigrationManager(null);
-        SortedSet<Migration> pendingMigrations = null;
         try {
-            pendingMigrations = migrationManager.pendingMigrations();
+            DriverManagerMigrationManager migrationManager = MigrationManagerFactory.createMigrationManager(null);
+            SortedSet<Migration> pendingMigrations = migrationManager.pendingMigrations();
+            if (pendingMigrations != null && pendingMigrations.size() > 0) {
+                migrationManager.migrate();
+            }
         } catch (MigrationException e) {
-            Logger.error("Failed to run migrations.", e);
-        }
-        if (pendingMigrations != null && pendingMigrations.size() > 0) {
-            migrationManager.migrate();
+            Logger.error(e, "Failed to run migrations.");
         }
     }
 }

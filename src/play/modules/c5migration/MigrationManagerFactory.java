@@ -2,6 +2,7 @@ package play.modules.c5migration;
 
 import com.carbonfive.db.migration.DriverManagerMigrationManager;
 import com.carbonfive.db.migration.ResourceMigrationResolver;
+import play.Logger;
 import play.Play;
 
 import java.io.FileInputStream;
@@ -13,7 +14,7 @@ import java.util.Properties;
  */
 public class MigrationManagerFactory {
 
-    private static final String DEFAULT_MIGRATIONS_PATH = "db/migrations";
+    public static final String DEFAULT_MIGRATIONS_PATH = "db/migrations";
 
     public static DriverManagerMigrationManager createMigrationManager(String configurationPath) {
         DriverManagerMigrationManager migrationManager = null;
@@ -33,7 +34,7 @@ public class MigrationManagerFactory {
             migrationManager = new DriverManagerMigrationManager(dbDriver, dbUrl, dbUsername, dbPassword);
             migrationManager.setMigrationResolver(new ResourceMigrationResolver(migrationsPath));
         } catch (IOException e) {
-            System.err.println("~ Error: creating migration manager failed! " + e.toString());
+            Logger.error(e, "~ Error: creating migration manager failed!");
         }
         return migrationManager;
     }
