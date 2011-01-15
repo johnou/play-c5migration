@@ -6,7 +6,7 @@ MODULE = 'c5migration'
 COMMANDS = ['c5migration:create', 'c5migration:drop', 'c5migration:migrate', 'c5migration:reset', 'c5migration:new', 'c5migration:check']
 
 HELP = {
-    'c5migration:create': ' Create a new, empty database',
+    'c5migration:create': ' Create empty database',
     'c5migration:drop': ' Drop database (use with caution!)',
     'c5migration:migrate': ' Apply all pending migrations',
     'c5migration:reset': ' Drop the existing database, create a new one, and apply all pending migrations (use with caution!)',

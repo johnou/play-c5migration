@@ -133,10 +133,10 @@ public enum MigrationCommand {
                 }
 
                 StringBuilder sb = new StringBuilder(FastDateFormat.getInstance(versionPattern, TimeZone.getTimeZone(versionTimeZone)).format(new Date()));
-                String name = System.getProperty("name", "");
+                String description = System.getProperty("description", "");
 
-                if (StringUtils.isNotBlank(name)) {
-                    sb.append("_").append(name);
+                if (StringUtils.isNotBlank(description)) {
+                    sb.append("_").append(description);
                 }
                 sb.append(".sql");
 
