@@ -18,7 +18,9 @@ public class MigrationMain {
 
         String command = args[0];
         MigrationCommand migrationCommand = MigrationCommand.valueOf(command.toUpperCase());
-        if (migrationCommand != null) {
+        if (migrationCommand == MigrationCommand.NEW) {
+            NewMigrationMain.main(new String[0]);
+        } else if (migrationCommand != null) {
             migrationCommand.execute(args[1]);
         } else {
             Logger.error("~ ERROR: Command '%s' not found!", command.toLowerCase());
