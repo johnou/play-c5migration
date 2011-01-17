@@ -14,14 +14,11 @@ public class MigrationMain {
         if (args.length < 2) {
             Logger.error("~ Arguments: <command> <application.conf>");
             System.exit(-1);
-
         }
 
         String command = args[0];
         MigrationCommand migrationCommand = MigrationCommand.valueOf(command.toUpperCase());
-        if (migrationCommand == MigrationCommand.NEW) {
-            NewMigrationMain.main(new String[0]);
-        } else if (migrationCommand != null) {
+        if (migrationCommand != null) {
             migrationCommand.execute(args[1]);
         } else {
             Logger.error("~ ERROR: Command '%s' not found!", command.toLowerCase());

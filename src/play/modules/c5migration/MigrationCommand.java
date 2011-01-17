@@ -1,75 +1,31 @@
 package play.modules.c5migration;
 
-import com.carbonfive.db.jdbc.schema.CreateDatabase;
-import com.carbonfive.db.jdbc.schema.DropDatabase;
 import com.carbonfive.db.migration.DriverManagerMigrationManager;
 import com.carbonfive.db.migration.Migration;
 import com.carbonfive.db.migration.MigrationException;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import play.Logger;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.sql.SQLException;
+import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TimeZone;
 
 /**
  * @author Johno Crawford (johno@hellface.com)
+ * @author heikkiu
  */
 public enum MigrationCommand {
 
-    CREATE {
-        @Override
-        public void execute(String configurationPath) {
-            try {
-                Properties properties = new Properties();
-                properties.load(new FileInputStream(configurationPath));
-
-                String dbDriver = properties.getProperty("db.driver");
-                String dbUrl = properties.getProperty("db.url");
-                String dbUsername = properties.getProperty("db.user");
-                String dbPassword = properties.getProperty("db.pass");
-                Logger.info("Creating database..");
-                new CreateDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute();
-            } catch (ClassNotFoundException e) {
-                Logger.error(e, "~ ERROR: Creating database failed.");
-            } catch (SQLException e) {
-                Logger.error(e, "~ ERROR: Creating database failed.");
-            } catch (IOException e) {
-                Logger.error(e, "~ ERROR: Creating database failed.");
-            }
-        }
-    }, DROP {
-        @Override
-        public void execute(String configurationPath) {
-            try {
-                Properties properties = new Properties();
-                properties.load(new FileInputStream(configurationPath));
-
-                String dbDriver = properties.getProperty("db.driver");
-                String dbUrl = properties.getProperty("db.url");
-                String dbUsername = properties.getProperty("db.user");
-                String dbPassword = properties.getProperty("db.pass");
-                Logger.info("Dropping database..");
-                new DropDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute();
-            } catch (ClassNotFoundException e) {
-                Logger.error(e, "~ ERROR: Dropping database failed.");
-            } catch (SQLException e) {
-                Logger.error(e, "~ ERROR: Dropping database failed.");
-            } catch (IOException e) {
-                Logger.error(e, "~ ERROR: Dropping database failed.");
-            }
-        }
-    }, MIGRATE {
+    MIGRATE {
         @Override
         public void execute(String configurationPath) {
             try {
@@ -82,76 +38,37 @@ public enum MigrationCommand {
                 Logger.error(e, "~ ERROR: Failed to run migrations. ");
             }
         }
-    }, RESET {
-        @Override
-        public void execute(String configurationPath) {
-            try {
-                Properties properties = new Properties();
-                properties.load(new FileInputStream(configurationPath));
-
-                String dbDriver = properties.getProperty("db.driver");
-                String dbUrl = properties.getProperty("db.url");
-                String dbUsername = properties.getProperty("db.user");
-                String dbPassword = properties.getProperty("db.pass");
-                DriverManagerMigrationManager migrationManager = MigrationManagerFactory.createMigrationManager(configurationPath);
-                Logger.info("Dropping database..");
-                new DropDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute(DropDatabase.DROP_DATABASE_SQL);
-                Logger.info("Creating database..");
-                new CreateDatabase(dbDriver, dbUrl, dbUsername, dbPassword).execute();
-                migrationManager.migrate();
-            } catch (IOException e) {
-                Logger.error(e, "~ ERROR: Resetting database failed.");
-            } catch (ClassNotFoundException e) {
-                Logger.error(e, "~ ERROR: Resetting database failed.");
-            } catch (SQLException e) {
-                Logger.error(e, "~ ERROR: Resetting database failed.");
-            } catch (MigrationException e) {
-                Logger.error(e, "~ ERROR: Resetting database failed.");
-            }
-        }
     }, NEW {
-        private String versionPattern = "yyyyMMddHHmmss";
-        private String versionTimeZone = "UTC";
+        private static final String versionPattern = "yyyyMMddHHmmss";
+        private static final String versionTimeZone = "UTC";
 
         @Override
         public void execute(String configurationPath) {
+            String path = System.getProperty("migration.path", "db/migrations");
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            System.out.println("Please write description for you migration:");
             try {
-                Properties properties = new Properties();
-                properties.load(new FileInputStream(configurationPath));
-                String migrationsPath = properties.getProperty("db.migrations.path", MigrationManagerFactory.DEFAULT_MIGRATIONS_PATH);
-
-                if (!migrationsPath.endsWith("/") && !migrationsPath.endsWith("\"")) {
-                    migrationsPath += "/";
+                String description = reader.readLine();
+                File directory = new File(path);
+                if (!directory.exists()) {
+                    System.out.println("Creating non-existent directory " + directory.getAbsolutePath());
+                    directory.createNewFile();
                 }
-
-                migrationsPath = FilenameUtils.separatorsToUnix(FilenameUtils.getFullPath(migrationsPath));
-
-                try {
-                    new File(migrationsPath).mkdirs();
-                } catch (Exception e) {
-                    Logger.error(e, "~ ERROR: Failed to create migrations directory: %s", migrationsPath);
-                }
-
-                StringBuilder sb = new StringBuilder(FastDateFormat.getInstance(versionPattern, TimeZone.getTimeZone(versionTimeZone)).format(new Date()));
-                String description = System.getProperty("description", "");
-
-                if (StringUtils.isNotBlank(description)) {
-                    sb.append("_").append(description);
-                }
-                sb.append(".sql");
-
-                String filename = migrationsPath + sb.toString();
-
-                Logger.info("Creating new migration %s.", filename);
-
-                try {
-                    new File(filename).createNewFile();
-                } catch (IOException e) {
-                    Logger.error(e, "~ ERROR: Failed to create migration file: %s" + filename);
-                }
-            } catch (IOException e) {
+                String version = FastDateFormat.getInstance(versionPattern, TimeZone.getTimeZone(versionTimeZone)).format(new Date());
+                description = StringUtils.replaceChars(description, ' ', '_');
+                description = StringUtils.replaceChars(description, ".,:;", "");
+                description = description.toLowerCase();
+                File migrationFile = new File(directory, version + "_" + description + ".sql");
+                migrationFile.createNewFile();
+                PrintWriter writer = new PrintWriter(new FileWriter(migrationFile));
+                writer.println("-- You can write you comments here ");
+                writer.close();
+                System.out.println("New migration file created " + migrationFile.getAbsolutePath());
+            } catch (Exception e) {
                 Logger.error(e, "~ ERROR: Failed to create migration file. ");
             }
+            System.exit(0);
         }
     }, CHECK {
         @Override

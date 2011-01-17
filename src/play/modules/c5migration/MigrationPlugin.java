@@ -13,6 +13,7 @@ import play.exceptions.UnexpectedException;
  */
 public class MigrationPlugin extends PlayPlugin {
 
+    @Override
     public void onApplicationStart() {
         String pattern = (String) Play.configuration.get("migrations.pattern");
         if (pattern != null) {
