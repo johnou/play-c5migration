@@ -14,6 +14,7 @@ public class MigrationMain {
         if (args.length < 2) {
             Logger.error("~ Arguments: <command> <application.conf>");
             System.exit(-1);
+
         }
 
         String command = args[0];
